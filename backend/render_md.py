@@ -1,122 +1,68 @@
-from summary_schema import MeetingSummary
+from schema import VideoSummary
 
-def md_from_summary(ms: MeetingSummary) -> str:
-    """Convert the rich summary to markdown format"""
-    lines = []
-    
-    # Header
-    lines.append(f"# {ms.meeting_type}")
-    lines.append(f"**Date:** {ms.meeting_date}")
-    lines.append("")
-    
-    # Executive Summary - This is your rich, detailed summary!
-    lines.append("## Meeting Overview")
-    lines.append("")
-    lines.append(ms.executive_summary)
-    lines.append("")
-    
-    # Meeting stats - more concise
-    if ms.total_decisions > 0 or ms.total_action_items > 0:
-        lines.append("### Key Statistics")
-        stats = []
-        if ms.total_decisions > 0:
-            stats.append(f"**Decisions Made:** {ms.total_decisions}")
-        if ms.total_action_items > 0:
-            stats.append(f"**Action Items:** {ms.total_action_items}")
-        if ms.overall_sentiment:
-            stats.append(f"**Overall Sentiment:** {ms.overall_sentiment.title()}")
-        if ms.attendance:
-            stats.append(f"**Attendance:** {format_attendance(ms.attendance)}")
-        lines.append(" | ".join(stats))
-        lines.append("")
-    
-    # Key Decisions section (if any)
-    if ms.key_decisions:
-        lines.append("## Key Decisions")
-        lines.append("")
-        for decision in ms.key_decisions:
-            lines.append(f"### {decision.item}")
-            if decision.vote:
-                lines.append(f"**Vote:** {decision.vote}")
-            lines.append(f"**Outcome:** {decision.outcome}")
-            if decision.details:
-                lines.append(f"")
-                lines.append(decision.details)
-            lines.append("")
-    
-    # Detailed topic sections
-    if ms.topics:
-        lines.append("## Detailed Discussion Topics")
-        lines.append("")
-        
-        for i, topic in enumerate(ms.topics, 1):
-            lines.append(f"### {i}. {topic.title}")
-            lines.append("")
-            
-            # Topic metadata
+
+def format_timestamp(seconds: int) -> str:
+    hours, remainder = divmod(int(seconds), 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
+
+
+def _at(seconds: int) -> str:
+    return f" _({format_timestamp(seconds)})_" if seconds else ""
+
+
+def md_from_summary(summary: VideoSummary, title: str) -> str:
+    lines = [f"# {title}", "", f"**{summary.one_liner}**", "", "## Overview", "", summary.executive_summary, ""]
+
+    if summary.topics:
+        lines += ["## What was covered", ""]
+        for index, topic in enumerate(summary.topics, start=1):
+            lines += [f"### {index}. {topic.title}{_at(topic.start_seconds)}", ""]
             if topic.speakers:
-                lines.append(f"**Speakers:** {', '.join(topic.speakers)}")
-                lines.append("")
-            
-            # Topic summary - the detailed one
-            lines.append(topic.summary)
-            lines.append("")
-            
-            # Key points if available
-            if hasattr(topic, 'key_points') and topic.key_points:
-                lines.append("**Key Points:**")
-                for point in topic.key_points:
-                    lines.append(f"- {point}")
-                lines.append("")
-            
-            # Decisions with details
-            if topic.decisions:
-                lines.append("**Decisions:**")
-                for decision in topic.decisions:
-                    lines.append(f"- {decision}")
-                lines.append("")
-            
-            # Concerns raised
-            if hasattr(topic, 'concerns_raised') and topic.concerns_raised:
-                lines.append("**Concerns Raised:**")
-                for concern in topic.concerns_raised:
-                    lines.append(f"- {concern}")
-                lines.append("")
-            
-            # Action items with full details
-            if topic.action_items:
-                lines.append("**Action Items:**")
-                for ai in topic.action_items:
-                    lines.append(f"- {ai.task}")
-                    lines.append(f"  - Owner: {ai.owner}")
-                    lines.append(f"  - Due: {ai.due}")
-                lines.append("")
-    
-    # Public Concerns section
-    if ms.public_concerns:
-        lines.append("## Public Concerns")
-        lines.append("")
-        for concern in ms.public_concerns:
-            lines.append(f"- {concern}")
-        lines.append("")
-    
-    # Next Steps section
-    if ms.next_steps:
-        lines.append("## Next Steps")
-        lines.append("")
-        for step in ms.next_steps:
-            lines.append(f"- {step}")
-        lines.append("")
-    
-    return "\n".join(lines)
+                lines += [f"**Speakers:** {', '.join(topic.speakers)}", ""]
+            lines += [topic.summary, ""]
+            if topic.key_points:
+                lines += [f"- {point}" for point in topic.key_points] + [""]
 
-def format_attendance(attendance: dict) -> str:
-    if not attendance:
-        return "Not specified"
-    
-    parts = []
-    for key, value in attendance.items():
-        readable_key = key.replace('_', ' ').title()
-        parts.append(f"{readable_key}: {value}")
-        
-    return ", ".join(parts)
+    if summary.decisions:
+        lines += ["## Decisions", ""]
+        for decision in summary.decisions:
+            lines += [f"- **{decision.item}** — {decision.outcome}{_at(decision.start_seconds)}"]
+            if decision.rationale:
+                lines += [f"  - {decision.rationale}"]
+        lines += [""]
+
+    if summary.action_items:
+        lines += ["## Action items", ""]
+        for item in summary.action_items:
+            attribution = " · ".join(part for part in [item.owner, item.due] if part)
+            suffix = f" ({attribution})" if attribution else ""
+            lines += [f"- {item.task}{suffix}{_at(item.start_seconds)}"]
+        lines += [""]
+
+    for section in summary.adaptive_sections:
+        if not section.items:
+            continue
+        lines += [f"## {section.title}", ""] + [f"- {item}" for item in section.items] + [""]
+
+    if summary.open_questions:
+        lines += ["## Open questions", ""] + [f"- {question}" for question in summary.open_questions] + [""]
+
+    if summary.notable_quotes:
+        lines += ["## Notable quotes", ""]
+        for quote in summary.notable_quotes:
+            attribution = f" — {quote.speaker}" if quote.speaker else ""
+            lines += [f"> {quote.text}{attribution}{_at(quote.start_seconds)}", ""]
+
+    if summary.participants:
+        lines += ["## Participants", ""]
+        for person in summary.participants:
+            role = f" — {person.role}" if person.role else ""
+            lines += [f"- **{person.name}**{role}"]
+            if person.contribution:
+                lines += [f"  - {person.contribution}"]
+        lines += [""]
+
+    return "\n".join(lines).strip() + "\n"
