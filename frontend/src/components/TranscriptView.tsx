@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { api } from '../api';
-import { formatTimestamp, momentUrl } from '../format';
+import { formatTimestamp } from '../format';
 import type { Transcript } from '../types/summary';
 
-interface TranscriptViewProps {
-  videoId: string;
-  sourceUrl: string | null;
-}
-
-const TranscriptView = ({ videoId, sourceUrl }: TranscriptViewProps) => {
+const TranscriptView = ({ videoId }: { videoId: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [transcript, setTranscript] = useState<Transcript | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +33,7 @@ const TranscriptView = ({ videoId, sourceUrl }: TranscriptViewProps) => {
           {transcript.segments.length > 0
             ? transcript.segments.map((segment, index) => (
                 <p key={index}>
-                  <Moment seconds={segment.start} sourceUrl={sourceUrl} />
+                  <Moment seconds={segment.start} />
                   {segment.text}
                 </p>
               ))
@@ -49,19 +44,10 @@ const TranscriptView = ({ videoId, sourceUrl }: TranscriptViewProps) => {
   );
 };
 
-export const Moment = ({ seconds, sourceUrl }: { seconds: number; sourceUrl: string | null }) => {
+export const Moment = ({ seconds }: { seconds: number }) => {
   if (!seconds) return null;
 
-  const label = formatTimestamp(seconds);
-  const link = momentUrl(sourceUrl, seconds);
-
-  if (!link) return <span className="moment">{label}</span>;
-
-  return (
-    <a className="moment" href={link} target="_blank" rel="noopener noreferrer">
-      {label}
-    </a>
-  );
+  return <span className="moment">{formatTimestamp(seconds)}</span>;
 };
 
 export default TranscriptView;

@@ -13,8 +13,8 @@ as "key decisions and action items" produces empty sections, because a lecture h
 
 ## What it does
 
-Paste a link or upload a file. Vexplico pulls the audio, transcribes it with timestamps, works out
-what kind of recording it is, and writes a summary shaped to fit it.
+Upload a recording. Vexplico pulls the audio, transcribes it with timestamps, works out what kind
+of recording it is, and writes a summary shaped to fit it.
 
 Every video gets the same core: an executive summary, topics, participants, open questions, and
 notable quotes. On top of that, the model chooses two to four sections that fit *this* recording —
@@ -22,13 +22,12 @@ notable quotes. On top of that, the model chooses two to four sections that fit 
 for a panel, "Testimony from the public" for a hearing. Sections a recording cannot support are left
 out rather than filled with filler.
 
-Every topic, decision, quote, and action item is anchored to the moment it happened, and those
-timestamps link back into the source video.
+Every topic, decision, quote, and action item is anchored to the timestamp where it happened, so
+you can scrub straight to it in your own copy of the recording.
 
 ## How it works
 
-1. **Ingest** — `yt-dlp` for links, direct upload for local files. Everything is normalized to
-   16kHz mono mp3.
+1. **Ingest** — an uploaded video or audio file, normalized to 16kHz mono mp3.
 2. **Transcribe** — audio is split into chunks that fit the Whisper API's 25MB limit, transcribed
    with timestamps, and stitched back together with offsets preserved. Length is not a constraint.
 3. **Profile** — one pass over the transcript's opening identifies what the recording actually is:
@@ -67,8 +66,7 @@ npm run dev
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Dependency check |
-| `POST` | `/api/videos` | Queue a video by URL |
-| `POST` | `/api/videos/upload` | Queue an uploaded file |
+| `POST` | `/api/videos` | Queue an uploaded file |
 | `GET` | `/api/videos` | List and search (`q`, `profile`, `limit`, `offset`) |
 | `GET` | `/api/videos/{id}` | Video with its summary |
 | `GET` | `/api/videos/{id}/transcript` | Transcript with timestamped segments |
@@ -81,5 +79,5 @@ Processing runs in the background. A queued video reports `status` and `stage` u
 ## Built with
 
 TypeScript and React on the front, FastAPI and SQLite on the back, `ffmpeg` for audio, OpenAI
-Whisper for transcription, and Gemini 2.5 Flash for analysis. Search runs on SQLite FTS5 over
+Whisper for transcription (language auto-detected), and Gemini 2.5 Flash for analysis. Search runs on SQLite FTS5 over
 titles, summaries, and transcripts.

@@ -69,8 +69,6 @@ export interface VideoSummary {
 export interface VideoListItem {
   id: string;
   title: string;
-  source_type: 'url' | 'upload';
-  source_url: string | null;
   duration_seconds: number | null;
   recorded_at: string | null;
   created_at: string;

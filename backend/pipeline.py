@@ -7,13 +7,13 @@ import db
 import media
 from analyze import analyze
 from render_md import md_from_summary
-from transcribe import transcribe
+from transcribe import duration_seconds, transcribe
 
 logger = logging.getLogger(__name__)
 
 
 def process_video(video_id: str) -> None:
-    """Run a queued video through download, transcription, and analysis."""
+    """Run a queued video through audio extraction, transcription, and analysis."""
     video = db.get_source(video_id)
     if not video:
         logger.error("Cannot process %s: no such video", video_id)
@@ -27,7 +27,8 @@ def process_video(video_id: str) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             stage = "audio"
             db.set_stage(video_id, stage)
-            audio_path = _prepare_audio(video, temp_dir)
+            audio_path = media.normalize_audio(video["upload_path"], temp_dir)
+            db.set_duration(video_id, round(duration_seconds(audio_path)))
 
             stage = "transcription"
             db.set_stage(video_id, stage)
@@ -60,10 +61,3 @@ def process_video(video_id: str) -> None:
         logger.debug(traceback.format_exc())
         db.mark_failed(video_id, stage, str(error))
 
-
-def _prepare_audio(video: dict, temp_dir: str) -> str:
-    if video["source_type"] == "upload":
-        return media.normalize_audio(video["upload_path"], temp_dir)
-
-    downloaded = media.download_audio(video["source_url"], temp_dir)
-    return media.normalize_audio(downloaded, temp_dir)

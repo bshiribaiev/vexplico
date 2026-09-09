@@ -33,17 +33,10 @@ export const api = {
 
   getTranscript: (id: string) => request<Transcript>(`/api/videos/${id}/transcript`),
 
-  submitUrl: (url: string) =>
-    request<{ id: string; title: string }>('/api/videos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    }),
-
   submitFile: (file: File) => {
     const body = new FormData();
     body.append('file', file);
-    return request<{ id: string; title: string }>('/api/videos/upload', { method: 'POST', body });
+    return request<{ id: string; title: string }>('/api/videos', { method: 'POST', body });
   },
 
   reprocess: (id: string) => request<{ id: string }>(`/api/videos/${id}/reprocess`, { method: 'POST' }),

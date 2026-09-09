@@ -7,8 +7,6 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-PROXY_URL = os.getenv("PROXY_URL")
-YOUTUBE_COOKIES = os.getenv("YOUTUBE_COOKIES")
 
 DB_PATH = Path(os.getenv("DB_PATH", "vexplico.db"))
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "uploads"))

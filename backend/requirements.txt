@@ -5,4 +5,3 @@ python-dotenv
 pydantic>=2
 openai
 google-genai
-yt-dlp

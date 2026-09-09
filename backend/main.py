@@ -1,6 +1,5 @@
 import logging
 import os
-import tempfile
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -8,7 +7,6 @@ from typing import Optional
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 import db
 import media
@@ -34,10 +32,6 @@ db.init_db()
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-class UrlSubmission(BaseModel):
-    url: str
-
-
 @app.get("/health")
 async def health():
     database_ok = True
@@ -57,39 +51,13 @@ async def health():
 
 
 @app.post("/api/videos", status_code=202)
-async def submit_url(submission: UrlSubmission, background_tasks: BackgroundTasks):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        try:
-            info = media.probe_source(submission.url, temp_dir)
-        except media.SourceError as error:
-            raise HTTPException(status_code=400, detail=str(error))
-
-    db.create_video(
-        video_id=info["id"],
-        title=info["title"],
-        source_type="url",
-        source_url=info["webpage_url"],
-        duration_seconds=info["duration_seconds"],
-        recorded_at=_iso_date(info["upload_date"]),
-    )
-    background_tasks.add_task(process_video, info["id"])
-
-    return {"id": info["id"], "title": info["title"], "status": "queued"}
-
-
-@app.post("/api/videos/upload", status_code=202)
-async def submit_upload(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def submit_video(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     video_id = uuid.uuid4().hex[:12]
     upload_path = UPLOAD_DIR / f"{video_id}{Path(file.filename or '').suffix}"
     upload_path.write_bytes(await file.read())
 
     title = Path(file.filename or "Uploaded video").stem
-    db.create_video(
-        video_id=video_id,
-        title=title,
-        source_type="upload",
-        upload_path=str(upload_path),
-    )
+    db.create_video(video_id=video_id, title=title, upload_path=str(upload_path))
     background_tasks.add_task(process_video, video_id)
 
     return {"id": video_id, "title": title, "status": "queued"}
@@ -141,13 +109,6 @@ async def delete_video(video_id: str):
     if upload_path and os.path.exists(upload_path):
         os.remove(upload_path)
     return {"id": video_id, "deleted": True}
-
-
-def _iso_date(compact_date: Optional[str]) -> Optional[str]:
-    """yt-dlp reports upload dates as YYYYMMDD."""
-    if not compact_date or len(compact_date) != 8:
-        return None
-    return f"{compact_date[:4]}-{compact_date[4:6]}-{compact_date[6:]}"
 
 
 if __name__ == "__main__":

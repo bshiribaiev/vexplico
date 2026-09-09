@@ -85,16 +85,6 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
         </div>
 
         <div className="detail-actions">
-          {video.source_url && (
-            <a
-              className="btn btn-quiet"
-              href={video.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Watch source
-            </a>
-          )}
           {video.summary_markdown && (
             <button className="btn btn-quiet" onClick={copyMarkdown}>
               {hasCopied ? 'Copied' : 'Copy as Markdown'}
@@ -136,7 +126,7 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
                 <article key={index} className="topic">
                   <h3 className="topic-title">
                     {topic.title}
-                    <Moment seconds={topic.start_seconds} sourceUrl={video.source_url} />
+                    <Moment seconds={topic.start_seconds} />
                   </h3>
                   <p className="prose">{topic.summary}</p>
                   {topic.key_points.length > 0 && (
@@ -161,7 +151,7 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
                 <div key={index} className="topic">
                   <p className="topic-title">
                     {decision.item}
-                    <Moment seconds={decision.start_seconds} sourceUrl={video.source_url} />
+                    <Moment seconds={decision.start_seconds} />
                   </p>
                   <p className="prose">{decision.outcome}</p>
                   {decision.rationale && <p className="topic-meta">{decision.rationale}</p>}
@@ -179,7 +169,7 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
                     {item.task}
                     {item.owner && <span className="topic-meta"> — {item.owner}</span>}
                     {item.due && <span className="topic-meta"> · due {item.due}</span>}
-                    <Moment seconds={item.start_seconds} sourceUrl={video.source_url} />
+                    <Moment seconds={item.start_seconds} />
                   </li>
                 ))}
               </ul>
@@ -216,7 +206,7 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
                   <p>{quote.text}</p>
                   <footer>
                     {quote.speaker}
-                    <Moment seconds={quote.start_seconds} sourceUrl={video.source_url} />
+                    <Moment seconds={quote.start_seconds} />
                   </footer>
                 </blockquote>
               ))}
@@ -238,7 +228,7 @@ const VideoDetail = ({ videoId, onBack, onDeleted }: VideoDetailProps) => {
             </section>
           )}
 
-          <TranscriptView videoId={videoId} sourceUrl={video.source_url} />
+          <TranscriptView videoId={videoId} />
         </>
       )}
     </div>

@@ -10,9 +10,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS videos (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
-    source_type TEXT NOT NULL,
-    source_url TEXT,
-    upload_path TEXT,
+    upload_path TEXT NOT NULL,
     duration_seconds INTEGER,
     recorded_at TEXT,
     created_at TEXT NOT NULL,
@@ -92,9 +90,7 @@ def init_db() -> None:
 def create_video(
     video_id: str,
     title: str,
-    source_type: str,
-    source_url: Optional[str] = None,
-    upload_path: Optional[str] = None,
+    upload_path: str,
     duration_seconds: Optional[int] = None,
     recorded_at: Optional[str] = None,
 ) -> None:
@@ -102,12 +98,11 @@ def create_video(
         conn.execute(
             """
             INSERT INTO videos
-                (id, title, source_type, source_url, upload_path, duration_seconds,
+                (id, title, upload_path, duration_seconds,
                  recorded_at, created_at, status, stage, error_message, attempts)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued', NULL, NULL, 0)
+            VALUES (?, ?, ?, ?, ?, ?, 'queued', NULL, NULL, 0)
             ON CONFLICT(id) DO UPDATE SET
                 title = excluded.title,
-                source_url = excluded.source_url,
                 upload_path = excluded.upload_path,
                 duration_seconds = excluded.duration_seconds,
                 recorded_at = excluded.recorded_at,
@@ -115,8 +110,7 @@ def create_video(
                 stage = NULL,
                 error_message = NULL
             """,
-            (video_id, title, source_type, source_url, upload_path, duration_seconds,
-             recorded_at, _now()),
+            (video_id, title, upload_path, duration_seconds, recorded_at, _now()),
         )
 
 
@@ -139,6 +133,11 @@ def mark_started(video_id: str) -> None:
             """,
             (video_id,),
         )
+
+
+def set_duration(video_id: str, duration_seconds: int) -> None:
+    with connection() as conn:
+        conn.execute("UPDATE videos SET duration_seconds = ? WHERE id = ?", (duration_seconds, video_id))
 
 
 def set_recorded_at(video_id: str, recorded_at: str) -> None:
@@ -223,7 +222,7 @@ def _reindex(conn: sqlite3.Connection, video_id: str) -> None:
 
 
 LIST_COLUMNS = """
-    v.id, v.title, v.source_type, v.source_url, v.duration_seconds, v.recorded_at,
+    v.id, v.title, v.duration_seconds, v.recorded_at,
     v.created_at, v.status, v.stage, v.error_message,
     a.profile, a.one_liner, a.created_at AS analyzed_at
 """
@@ -293,7 +292,7 @@ def get_source(video_id: str) -> Optional[dict]:
     """The fields the processing pipeline needs, including the on-disk path of an upload."""
     with connection(read_only=True) as conn:
         row = conn.execute(
-            "SELECT id, title, source_type, source_url, upload_path FROM videos WHERE id = ?",
+            "SELECT id, title, upload_path FROM videos WHERE id = ?",
             (video_id,),
         ).fetchone()
     return dict(row) if row else None

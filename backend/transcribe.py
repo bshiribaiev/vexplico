@@ -27,7 +27,7 @@ class Transcript:
 
 def split_audio(audio_path: str, temp_dir: str) -> list[tuple[str, float]]:
     """Split audio into chunks small enough for the Whisper API, with each chunk's start offset."""
-    if _duration_seconds(audio_path) <= AUDIO_CHUNK_SECONDS:
+    if duration_seconds(audio_path) <= AUDIO_CHUNK_SECONDS:
         return [(audio_path, 0.0)]
 
     chunk_dir = Path(temp_dir) / "chunks"
@@ -50,13 +50,13 @@ def split_audio(audio_path: str, temp_dir: str) -> list[tuple[str, float]]:
     offset = 0.0
     for path in chunk_paths:
         chunks.append((str(path), offset))
-        offset += _duration_seconds(str(path))
+        offset += duration_seconds(str(path))
 
     logger.info("Split audio into %d chunks", len(chunks))
     return chunks
 
 
-def _duration_seconds(audio_path: str) -> float:
+def duration_seconds(audio_path: str) -> float:
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
          "-of", "json", audio_path],

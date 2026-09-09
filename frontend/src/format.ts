@@ -33,12 +33,3 @@ export function formatDuration(seconds: number | null): string {
   const minutes = Math.round((seconds % 3600) / 60);
   return hours ? `${hours}h ${minutes}m` : `${minutes} min`;
 }
-
-/** A deep link to the moment in the source video, when the source supports one. */
-export function momentUrl(sourceUrl: string | null, seconds: number): string | null {
-  if (!sourceUrl || !seconds) return null;
-  if (!/youtube\.com|youtu\.be/.test(sourceUrl)) return null;
-
-  const separator = sourceUrl.includes('?') ? '&' : '?';
-  return `${sourceUrl}${separator}t=${Math.floor(seconds)}s`;
-}
