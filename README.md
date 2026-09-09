@@ -1,4 +1,4 @@
-# Explico
+# Vexplico
 
 Turn any recorded video into a summary worth reading.
 
@@ -13,7 +13,7 @@ as "key decisions and action items" produces empty sections, because a lecture h
 
 ## What it does
 
-Paste a link or upload a file. Explico pulls the audio, transcribes it with timestamps, works out
+Paste a link or upload a file. Vexplico pulls the audio, transcribes it with timestamps, works out
 what kind of recording it is, and writes a summary shaped to fit it.
 
 Every video gets the same core: an executive summary, topics, participants, open questions, and

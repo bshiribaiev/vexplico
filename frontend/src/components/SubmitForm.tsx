@@ -45,7 +45,7 @@ const SubmitForm = ({ onSubmitted }: SubmitFormProps) => {
     <div className="page">
       <h1 className="page-title">Analyze a video</h1>
       <p className="page-subtitle">
-        Paste a link or upload a recording. Explico transcribes it, works out what kind of recording
+        Paste a link or upload a recording. Vexplico transcribes it, works out what kind of recording
         it is, and writes a summary that fits it.
       </p>
 

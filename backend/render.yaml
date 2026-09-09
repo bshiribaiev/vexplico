@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: explico-backend
+    name: vexplico-backend
     runtime: python
     rootDir: backend
     plan: free
