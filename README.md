@@ -27,9 +27,9 @@ you can scrub straight to it in your own copy of the recording.
 
 ## How it works
 
-1. **Ingest** — an uploaded video or audio file, normalized to 16kHz mono mp3.
-2. **Transcribe** — audio is split into chunks that fit the Whisper API's 25MB limit, transcribed
-   with timestamps, and stitched back together with offsets preserved. Length is not a constraint.
+1. **Ingest** — an uploaded video or audio file, normalized to 16kHz mono FLAC.
+2. **Transcribe** — the whole recording goes to AssemblyAI in one request, up to 10 hours, coming
+   back as speaker-labelled turns with timestamps. Language is auto-detected.
 3. **Profile** — one pass over the transcript's opening identifies what the recording actually is:
    meeting, interview, lecture, presentation, panel, call, hearing, podcast, or other.
 4. **Analyze** — a map/reduce over the transcript extracts the core fields, then a consolidation
@@ -46,7 +46,7 @@ Backend:
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env    # add OPENAI_API_KEY and GEMINI_API_KEY
+cp .env.example .env    # add ASSEMBLYAI_API_KEY and GEMINI_API_KEY
 uvicorn main:app --reload
 ```
 
@@ -78,6 +78,6 @@ Processing runs in the background. A queued video reports `status` and `stage` u
 
 ## Built with
 
-TypeScript and React on the front, FastAPI and SQLite on the back, `ffmpeg` for audio, OpenAI
-Whisper for transcription (language auto-detected), and Gemini 2.5 Flash for analysis. Search runs on SQLite FTS5 over
+TypeScript and React on the front, FastAPI and SQLite on the back, `ffmpeg` for audio, AssemblyAI
+for transcription (speaker labels, auto language detection), and Gemini 2.5 Flash for analysis. Search runs on SQLite FTS5 over
 titles, summaries, and transcripts.

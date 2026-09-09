@@ -26,6 +26,9 @@ Rules that apply to every video:
 - Attribute claims to whoever made them when the speaker is identifiable.
 - Timestamps are given in the transcript as [seconds] markers. Use those exact numbers when a
   field asks for start_seconds; use 0 only when you genuinely cannot place the moment.
+- Lines are labelled with the speaker turn that produced them (Speaker A, Speaker B, and so on).
+  These are anonymous labels, not names. When someone is introduced or addressed by name, map the
+  label to that name and use the real name; otherwise keep the label as given.
 """.strip()
 
 
@@ -106,7 +109,8 @@ def chunk_transcript(transcript: Transcript) -> list[str]:
     current_length = 0
 
     for segment in transcript.segments:
-        line = f"[{int(segment['start'])}] {segment['text']}"
+        speaker = f"Speaker {segment['speaker']}: " if segment.get("speaker") else ""
+        line = f"[{int(segment['start'])}] {speaker}{segment['text']}"
         if current_length + len(line) > ANALYSIS_CHUNK_CHARS and current:
             chunks.append("\n".join(current))
             current, current_length = [], 0

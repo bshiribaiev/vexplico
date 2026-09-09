@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import db
 import media
-from config import CORS_ORIGINS, GEMINI_API_KEY, OPENAI_API_KEY, UPLOAD_DIR
+from config import ASSEMBLYAI_API_KEY, CORS_ORIGINS, GEMINI_API_KEY, UPLOAD_DIR
 from pipeline import process_video
 from schema import Profile
 
@@ -45,7 +45,7 @@ async def health():
     return {
         "database": database_ok,
         "ffmpeg": media.ffmpeg_available(),
-        "transcription": bool(OPENAI_API_KEY),
+        "transcription": bool(ASSEMBLYAI_API_KEY),
         "analysis": bool(GEMINI_API_KEY),
     }
 

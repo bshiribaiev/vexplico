@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 DB_PATH = Path(os.getenv("DB_PATH", "vexplico.db"))
@@ -17,11 +17,8 @@ CORS_ORIGINS = [
     if origin.strip()
 ]
 
-TRANSCRIPTION_MODEL = "whisper-1"
+# Tried in order; the second is a cheaper fallback if the first is unavailable.
+TRANSCRIPTION_MODELS = ["universal-3-5-pro", "universal-2"]
 ANALYSIS_MODEL = "gemini-2.5-flash"
-
-# The Whisper API rejects uploads over 25MB. Fifteen minutes of 16kHz mono mp3
-# lands near 7MB, which leaves room for unusually dense audio.
-AUDIO_CHUNK_SECONDS = 900
 
 ANALYSIS_CHUNK_CHARS = 15000

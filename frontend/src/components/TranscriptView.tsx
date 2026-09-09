@@ -34,6 +34,7 @@ const TranscriptView = ({ videoId }: { videoId: string }) => {
             ? transcript.segments.map((segment, index) => (
                 <p key={index}>
                   <Moment seconds={segment.start} />
+                  {segment.speaker && <span className="speaker">Speaker {segment.speaker}</span>}
                   {segment.text}
                 </p>
               ))

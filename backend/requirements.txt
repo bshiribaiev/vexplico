@@ -3,5 +3,5 @@ uvicorn[standard]
 python-multipart
 python-dotenv
 pydantic>=2
-openai
+assemblyai
 google-genai

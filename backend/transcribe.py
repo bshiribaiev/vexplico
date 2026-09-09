@@ -1,12 +1,9 @@
-import json
 import logging
-import subprocess
 from dataclasses import dataclass, field
-from pathlib import Path
 
-from openai import OpenAI
+import assemblyai as aai
 
-from config import AUDIO_CHUNK_SECONDS, OPENAI_API_KEY, TRANSCRIPTION_MODEL
+from config import ASSEMBLYAI_API_KEY, TRANSCRIPTION_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -25,83 +22,40 @@ class Transcript:
         return len(self.text.strip()) >= 100
 
 
-def split_audio(audio_path: str, temp_dir: str) -> list[tuple[str, float]]:
-    """Split audio into chunks small enough for the Whisper API, with each chunk's start offset."""
-    if duration_seconds(audio_path) <= AUDIO_CHUNK_SECONDS:
-        return [(audio_path, 0.0)]
+def transcribe(audio_path: str) -> Transcript:
+    """Transcribe a recording of any length, with speaker turns and timestamps."""
+    if not ASSEMBLYAI_API_KEY:
+        raise TranscriptionError("ASSEMBLYAI_API_KEY is not set")
 
-    chunk_dir = Path(temp_dir) / "chunks"
-    chunk_dir.mkdir(exist_ok=True)
-    command = [
-        "ffmpeg", "-i", audio_path,
-        "-f", "segment", "-segment_time", str(AUDIO_CHUNK_SECONDS),
-        "-c", "copy", "-reset_timestamps", "1",
-        str(chunk_dir / "chunk%04d.mp3"), "-y",
-    ]
-    result = subprocess.run(command, capture_output=True, text=True)
-
-    chunk_paths = sorted(chunk_dir.glob("chunk*.mp3"))
-    if result.returncode != 0 or not chunk_paths:
-        raise TranscriptionError(f"ffmpeg could not split audio: {result.stderr[-500:]}")
-
-    # Offsets accumulate measured durations rather than the nominal segment length,
-    # because -c copy can only cut on frame boundaries.
-    chunks = []
-    offset = 0.0
-    for path in chunk_paths:
-        chunks.append((str(path), offset))
-        offset += duration_seconds(str(path))
-
-    logger.info("Split audio into %d chunks", len(chunks))
-    return chunks
-
-
-def duration_seconds(audio_path: str) -> float:
-    result = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "json", audio_path],
-        capture_output=True, text=True,
+    aai.settings.api_key = ASSEMBLYAI_API_KEY
+    config = aai.TranscriptionConfig(
+        speech_models=TRANSCRIPTION_MODELS,
+        speaker_labels=True,
+        language_detection=True,
     )
-    if result.returncode != 0:
-        raise TranscriptionError(f"ffprobe could not read {audio_path}: {result.stderr[-300:]}")
-    return float(json.loads(result.stdout)["format"]["duration"])
 
+    logger.info("Transcribing %s", audio_path)
+    result = aai.Transcriber().transcribe(audio_path, config=config)
 
-def transcribe(audio_path: str, temp_dir: str) -> Transcript:
-    """Transcribe audio of any length, preserving timestamps across chunk boundaries."""
-    if not OPENAI_API_KEY:
-        raise TranscriptionError("OPENAI_API_KEY is not set")
+    if result.status == aai.TranscriptStatus.error:
+        raise TranscriptionError(f"Transcription failed: {result.error}")
 
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    chunks = split_audio(audio_path, temp_dir)
-
-    segments = []
-    texts = []
-
-    for index, (chunk_path, offset) in enumerate(chunks):
-        logger.info("Transcribing chunk %d/%d", index + 1, len(chunks))
-        chunk = _transcribe_chunk(client, chunk_path)
-        texts.append(chunk.text.strip())
-        segments.extend(
-            {
-                "start": round(segment.start + offset, 2),
-                "end": round(segment.end + offset, 2),
-                "text": segment.text.strip(),
-            }
-            for segment in chunk.segments or []
-        )
-
-    transcript = Transcript(text=" ".join(t for t in texts if t), segments=segments)
+    transcript = Transcript(text=(result.text or "").strip(), segments=_to_segments(result))
     if not transcript.is_usable:
         raise TranscriptionError("Transcription produced too little text to analyze")
 
+    logger.info("Transcribed %d characters across %d turns", len(transcript.text), len(transcript.segments))
     return transcript
 
 
-def _transcribe_chunk(client: OpenAI, chunk_path: str):
-    with open(chunk_path, "rb") as audio_file:
-        return client.audio.transcriptions.create(
-            model=TRANSCRIPTION_MODEL,
-            file=audio_file,
-            response_format="verbose_json",
-        )
+def _to_segments(result) -> list[dict]:
+    """One segment per speaker turn. The API reports timestamps in milliseconds."""
+    return [
+        {
+            "start": round(utterance.start / 1000, 2),
+            "end": round(utterance.end / 1000, 2),
+            "speaker": utterance.speaker,
+            "text": utterance.text.strip(),
+        }
+        for utterance in result.utterances or []
+    ]

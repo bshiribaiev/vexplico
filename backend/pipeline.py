@@ -7,7 +7,7 @@ import db
 import media
 from analyze import analyze
 from render_md import md_from_summary
-from transcribe import duration_seconds, transcribe
+from transcribe import transcribe
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,11 @@ def process_video(video_id: str) -> None:
             stage = "audio"
             db.set_stage(video_id, stage)
             audio_path = media.normalize_audio(video["upload_path"], temp_dir)
-            db.set_duration(video_id, round(duration_seconds(audio_path)))
+            db.set_duration(video_id, round(media.duration_seconds(audio_path)))
 
             stage = "transcription"
             db.set_stage(video_id, stage)
-            transcript = transcribe(audio_path, temp_dir)
+            transcript = transcribe(audio_path)
             db.save_transcript(video_id, transcript.text, transcript.segments)
 
         stage = "analysis"

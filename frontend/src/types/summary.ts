@@ -89,6 +89,7 @@ export interface VideoDetail extends VideoListItem {
 export interface TranscriptSegment {
   start: number;
   end: number;
+  speaker: string | null;
   text: string;
 }
 
