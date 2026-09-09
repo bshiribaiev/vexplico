@@ -2,10 +2,28 @@
 
 Turn any recorded video into a summary worth reading.
 
+## Problem
+
+Recorded video is the worst place to store information. A two-hour meeting, a conference talk, a
+lecture, a customer call — the substance is in there, but retrieving it means watching the whole
+thing at 1x. Transcripts alone do not fix this; they just move the wall of words.
+
+Generic summarizers make it worse by flattening everything into the same shape. A lecture summarized
+as "key decisions and action items" produces empty sections, because a lecture has neither.
+
+## What it does
+
 Paste a link or upload a file. Explico pulls the audio, transcribes it with timestamps, works out
-what kind of recording it is — a meeting, an interview, a lecture, a sales call, a public hearing —
-and writes a summary shaped to fit it. A lecture gets concepts and worked examples; a meeting gets
-decisions and action items; an interview gets neither, because it has neither.
+what kind of recording it is, and writes a summary shaped to fit it.
+
+Every video gets the same core: an executive summary, topics, participants, open questions, and
+notable quotes. On top of that, the model chooses two to four sections that fit *this* recording —
+"Concepts introduced" for a lecture, "Objections raised" for a sales call, "Points of disagreement"
+for a panel, "Testimony from the public" for a hearing. Sections a recording cannot support are left
+out rather than filled with filler.
+
+Every topic, decision, quote, and action item is anchored to the moment it happened, and those
+timestamps link back into the source video.
 
 ## How it works
 
@@ -13,11 +31,13 @@ decisions and action items; an interview gets neither, because it has neither.
    16kHz mono mp3.
 2. **Transcribe** — audio is split into chunks that fit the Whisper API's 25MB limit, transcribed
    with timestamps, and stitched back together with offsets preserved. Length is not a constraint.
-3. **Profile** — one pass over the transcript's opening identifies what the recording actually is.
-4. **Analyze** — a map/reduce over the transcript extracts topics, decisions, action items,
-   participants, open questions, and quotes, each anchored to the moment it happened. The model
-   also chooses two to four sections that fit this particular recording.
-5. **Read** — the summary renders with timestamps that link back into the source video.
+3. **Profile** — one pass over the transcript's opening identifies what the recording actually is:
+   meeting, interview, lecture, presentation, panel, call, hearing, podcast, or other.
+4. **Analyze** — a map/reduce over the transcript extracts the core fields, then a consolidation
+   pass merges them and picks the adaptive sections. Invalid model output is retried once with the
+   validation error fed back, then fails loudly rather than degrading to an empty summary.
+5. **Read** — the summary renders structurally, with a Markdown export and the full transcript
+   underneath.
 
 ## Running it
 
@@ -54,6 +74,9 @@ npm run dev
 | `GET` | `/api/videos/{id}/transcript` | Transcript with timestamped segments |
 | `POST` | `/api/videos/{id}/reprocess` | Re-run the pipeline |
 | `DELETE` | `/api/videos/{id}` | Delete a video and its analysis |
+
+Processing runs in the background. A queued video reports `status` and `stage` until it reaches
+`completed` or `failed`, and a failure records the stage it died at.
 
 ## Built with
 
