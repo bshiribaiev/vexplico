@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { api } from '../api';
 import { formatTimestamp, momentUrl } from '../format';
 import type { Transcript } from '../types/summary';
@@ -24,20 +24,20 @@ const TranscriptView = ({ videoId, sourceUrl }: TranscriptViewProps) => {
   }, [isOpen, transcript, videoId]);
 
   return (
-    <section className="summary-section">
-      <button className="transcript-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-        Full transcript
+    <section className="section">
+      <button className="disclosure" onClick={() => setIsOpen(!isOpen)}>
+        <ChevronRight size={14} className={`chevron ${isOpen ? 'open' : ''}`} />
+        Transcript
       </button>
 
-      {isOpen && !transcript && !error && <Loader size={20} className="animate-spin" />}
-      {isOpen && error && <p className="form-error">{error}</p>}
+      {isOpen && !transcript && !error && <p className="muted mt-3">Loading...</p>}
+      {isOpen && error && <p className="error-text mt-3">{error}</p>}
 
       {isOpen && transcript && (
-        <div className="transcript-body">
+        <div className="transcript">
           {transcript.segments.length > 0
             ? transcript.segments.map((segment, index) => (
-                <p key={index} className="transcript-line">
+                <p key={index}>
                   <Moment seconds={segment.start} sourceUrl={sourceUrl} />
                   {segment.text}
                 </p>
@@ -58,7 +58,7 @@ export const Moment = ({ seconds, sourceUrl }: { seconds: number; sourceUrl: str
   if (!link) return <span className="moment">{label}</span>;
 
   return (
-    <a className="moment moment-link" href={link} target="_blank" rel="noopener noreferrer">
+    <a className="moment" href={link} target="_blank" rel="noopener noreferrer">
       {label}
     </a>
   );

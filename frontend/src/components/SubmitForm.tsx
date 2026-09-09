@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Brain, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { api } from '../api';
 
 interface SubmitFormProps {
@@ -42,77 +42,67 @@ const SubmitForm = ({ onSubmitted }: SubmitFormProps) => {
   };
 
   return (
-    <div className="max-width-container">
+    <div className="page">
       <h1 className="page-title">Analyze a video</h1>
       <p className="page-subtitle">
-        Paste a link or upload a recording. Explico transcribes it, works out what kind of
-        recording it is, and writes a summary that fits it.
+        Paste a link or upload a recording. Explico transcribes it, works out what kind of recording
+        it is, and writes a summary that fits it.
       </p>
 
-      <div className="card">
-        <div className="mode-selector">
-          <button
-            className={`mode-button ${mode === 'url' ? 'active' : ''}`}
-            onClick={() => setMode('url')}
-          >
-            Video link
-          </button>
-          <button
-            className={`mode-button ${mode === 'file' ? 'active' : ''}`}
-            onClick={() => setMode('file')}
-          >
-            Upload file
-          </button>
-        </div>
-
-        {mode === 'url' ? (
-          <input
-            type="url"
-            className="input"
-            placeholder="https://www.youtube.com/watch?v=..."
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-          />
-        ) : (
-          <div
-            className={`upload-area ${isDragging ? 'dragging' : ''}`}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={dropFile}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*,audio/*"
-              hidden
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            />
-            {file ? file.name : 'Drop a video or audio file, or click to browse'}
-          </div>
-        )}
-
-        {error && <p className="form-error">{error}</p>}
-
-        <button
-          className="btn btn-success submit-button"
-          onClick={submit}
-          disabled={!canSubmit || isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader size={18} className="animate-spin" /> Submitting…
-            </>
-          ) : (
-            <>
-              <Brain size={18} /> Start analysis
-            </>
-          )}
+      <div className="tabs">
+        <button className={`tab ${mode === 'url' ? 'active' : ''}`} onClick={() => setMode('url')}>
+          Link
+        </button>
+        <button className={`tab ${mode === 'file' ? 'active' : ''}`} onClick={() => setMode('file')}>
+          Upload
         </button>
       </div>
+
+      {mode === 'url' ? (
+        <input
+          type="url"
+          className="input input-lg"
+          placeholder="https://www.youtube.com/watch?v=..."
+          value={url}
+          onChange={(event) => setUrl(event.target.value)}
+        />
+      ) : (
+        <div
+          className={`dropzone ${isDragging ? 'dragging' : ''}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={dropFile}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/*,audio/*"
+            hidden
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          />
+          {file ? file.name : 'Drop a video or audio file, or click to browse'}
+        </div>
+      )}
+
+      {error && <p className="error-text mt-3">{error}</p>}
+
+      <button
+        className="btn btn-primary mt-4"
+        onClick={submit}
+        disabled={!canSubmit || isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader size={16} className="animate-spin" /> Submitting
+          </>
+        ) : (
+          'Start analysis'
+        )}
+      </button>
     </div>
   );
 };

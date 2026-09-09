@@ -1,5 +1,3 @@
-import { Library, Plus } from 'lucide-react';
-
 export type View = 'library' | 'submit' | 'detail';
 
 interface NavbarProps {
@@ -8,31 +6,29 @@ interface NavbarProps {
 }
 
 const Navbar = ({ view, onNavigate }: NavbarProps) => (
-  <header className="navbar">
+  <nav className="navbar">
     <div className="navbar-content">
       <button className="navbar-brand" onClick={() => onNavigate('library')}>
         <img src="/logo.png" alt="" className="navbar-logo" />
-        <span>Explico</span>
+        explico
       </button>
 
-      <nav className="navbar-nav">
+      <div className="navbar-nav">
         <button
-          className={`navbar-link ${view === 'library' || view === 'detail' ? 'active' : ''}`}
+          className={`navbar-link ${view !== 'submit' ? 'active' : ''}`}
           onClick={() => onNavigate('library')}
         >
-          <Library size={16} />
-          <span>Library</span>
+          Library
         </button>
         <button
           className={`navbar-link ${view === 'submit' ? 'active' : ''}`}
           onClick={() => onNavigate('submit')}
         >
-          <Plus size={16} />
-          <span>Analyze video</span>
+          Analyze
         </button>
-      </nav>
+      </div>
     </div>
-  </header>
+  </nav>
 );
 
 export default Navbar;

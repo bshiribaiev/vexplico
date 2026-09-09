@@ -29,9 +29,7 @@ const App = () => {
     <div className="app-container">
       <Navbar view={view} onNavigate={(next) => (next === 'library' ? openLibrary() : setView(next))} />
 
-      {!isBackendReachable && (
-        <div className="banner-error">The analysis server is not reachable.</div>
-      )}
+      {!isBackendReachable && <div className="banner-error">Analysis server unreachable</div>}
 
       {view === 'submit' && <SubmitForm onSubmitted={openVideo} />}
       {view === 'library' && <VideoLibrary onSelect={openVideo} />}
