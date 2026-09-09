@@ -1,18 +1,62 @@
-# cbmeetings
+# Explico
 
-## Problem
+Turn any recorded video into a summary worth reading.
 
-Manhattan Community Board meetings are long, complex, and often inaccessible to the public due to their length and lack of concise documentation. Important decisions and discussions can be missed by community members, journalists, and policymakers who do not have the time or resources to review hours of meeting footage or transcripts.
+Paste a link or upload a file. Explico pulls the audio, transcribes it with timestamps, works out
+what kind of recording it is — a meeting, an interview, a lecture, a sales call, a public hearing —
+and writes a summary shaped to fit it. A lecture gets concepts and worked examples; a meeting gets
+decisions and action items; an interview gets neither, because it has neither.
 
-![Demo](./walkthrough.gif)
+## How it works
 
-## Impact
+1. **Ingest** — `yt-dlp` for links, direct upload for local files. Everything is normalized to
+   16kHz mono mp3.
+2. **Transcribe** — audio is split into chunks that fit the Whisper API's 25MB limit, transcribed
+   with timestamps, and stitched back together with offsets preserved. Length is not a constraint.
+3. **Profile** — one pass over the transcript's opening identifies what the recording actually is.
+4. **Analyze** — a map/reduce over the transcript extracts topics, decisions, action items,
+   participants, open questions, and quotes, each anchored to the moment it happened. The model
+   also chooses two to four sections that fit this particular recording.
+5. **Read** — the summary renders with timestamps that link back into the source video.
 
-By automatically analyzing and summarizing these meetings, cbmeetings makes local government more transparent and accessible. The app enables residents, advocates, and officials to quickly understand key points, decisions, and community issues, fostering greater civic engagement and accountability.
+## Running it
 
-## Technologies used
+Backend:
 
-- Frontend: Typescript, React
-- Backend: Python, Fast API, FFmpeg
-- AI: OpenAI Whisper for Transcription, Gemini Flash 2.0 for Analysis
-- Database: SQLite
+```bash
+cd backend
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env    # add OPENAI_API_KEY and GEMINI_API_KEY
+uvicorn main:app --reload
+```
+
+Requires `ffmpeg` on the path.
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env    # VITE_API_BASE_URL=http://localhost:8000
+npm run dev
+```
+
+## API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Dependency check |
+| `POST` | `/api/videos` | Queue a video by URL |
+| `POST` | `/api/videos/upload` | Queue an uploaded file |
+| `GET` | `/api/videos` | List and search (`q`, `profile`, `limit`, `offset`) |
+| `GET` | `/api/videos/{id}` | Video with its summary |
+| `GET` | `/api/videos/{id}/transcript` | Transcript with timestamped segments |
+| `POST` | `/api/videos/{id}/reprocess` | Re-run the pipeline |
+| `DELETE` | `/api/videos/{id}` | Delete a video and its analysis |
+
+## Built with
+
+TypeScript and React on the front, FastAPI and SQLite on the back, `ffmpeg` for audio, OpenAI
+Whisper for transcription, and Gemini 2.5 Flash for analysis. Search runs on SQLite FTS5 over
+titles, summaries, and transcripts.
