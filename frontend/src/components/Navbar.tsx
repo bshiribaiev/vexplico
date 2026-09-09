@@ -9,7 +9,6 @@ const Navbar = ({ view, onNavigate }: NavbarProps) => (
   <nav className="navbar">
     <div className="navbar-content">
       <button className="navbar-brand" onClick={() => onNavigate('library')}>
-        <img src="/logo.png" alt="" className="navbar-logo" />
         explico
       </button>
 

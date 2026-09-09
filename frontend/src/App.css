@@ -86,9 +86,6 @@
 }
 
 .navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--gray-900);
@@ -96,11 +93,6 @@
   background: none;
   border: none;
   padding: 0;
-}
-
-.navbar-logo {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 
 .navbar-nav {
