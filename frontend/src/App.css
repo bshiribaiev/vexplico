@@ -99,6 +99,9 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  /* Pull the last link's padding past the container edge so its text sits flush
+     with the content below, which has no such padding. */
+  margin-right: -0.75rem;
 }
 
 .navbar-link {
