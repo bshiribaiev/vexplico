@@ -7,7 +7,7 @@ import VideoDetail from './components/VideoDetail';
 import VideoLibrary from './components/VideoLibrary';
 
 const App = () => {
-  const [view, setView] = useState<View>('library');
+  const [view, setView] = useState<View>('submit');
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [isBackendReachable, setIsBackendReachable] = useState(true);
 
