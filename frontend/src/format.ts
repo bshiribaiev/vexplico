@@ -8,13 +8,22 @@ export function formatTimestamp(seconds: number): string {
   return hours ? `${hours}:${padded}` : padded;
 }
 
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
 export function formatDate(value: string | null): string {
   if (!value) return 'Date unknown';
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  // A bare calendar date parses as UTC midnight, which renders as the day before
+  // in any negative-offset timezone, so read it back in UTC.
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: DATE_ONLY.test(value) ? 'UTC' : undefined,
+  });
 }
 
 export function formatDuration(seconds: number | null): string {
