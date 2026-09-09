@@ -24,10 +24,10 @@ dist-ssr
 *.sw?
 
 backend/venv/
-backend/processed_meetings
 backend/__pycache__
-backend/cb_processor.log
 backend/.env
-backend/list_models.py
-main2.py
-app2.tsx
+backend/uploads/
+*.db
+*.db-shm
+*.db-wal
+.env.local
